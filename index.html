@@ -26,18 +26,16 @@
 </head>
 <body>
     <div id="info">
-        <h2>🌌 Nuestro Universo Real, mi Rosario ❤️</h2>
-        <p>Usa WASD para moverte, mouse para mirar. Acércate a los planetas para descubrir mis mensajes.</p>
+        <h2>🌌 Nuestro Universo, mi Rosario ❤️</h2>
+        <p>Usa WASD para moverte, mouse para mirar. Acércate a los planetas para leer mis mensajes.</p>
         <p>¡Feliz San Valentín, mi amor eterno! 💕</p>
         <button id="musicBtn" onclick="toggleMusic()">▶️ Love Story</button>
     </div>
 
     <div id="floatingMessage"></div>
 
-    <!-- Música: Love Story - Indila (cambia a tu MP3 local si no carga) -->
     <audio id="bgMusic" loop>
         <source src="https://archive.org/download/indilamusicoggvorbis/Mini%20World/Indila%20-%20Love%20story.mp3" type="audio/mpeg">
-        <!-- Si subes MP3: <source src="love-story.mp3" type="audio/mpeg"> -->
         Tu navegador no soporta audio.
     </audio>
 
@@ -49,20 +47,22 @@
             }
         }
     </script>
+
     <script type="module">
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x000022, 0.00015); // Niebla para profundidad
+        scene.fog = new THREE.FogExp2(0x000022, 0.00012);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setClearColor(0x000011);
+        renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // Luz ambiental para ver todo
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         scene.add(ambientLight);
 
         const controls = new PointerLockControls(camera, document.body);
@@ -74,73 +74,97 @@
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
 
         document.addEventListener('keydown', (e) => {
-            switch (e.code) { case 'KeyW': moveForward = true; break; case 'KeyS': moveBackward = true; break;
-                case 'KeyA': moveLeft = true; break; case 'KeyD': moveRight = true; break; }
+            switch (e.code) {
+                case 'KeyW': moveForward = true; break;
+                case 'KeyS': moveBackward = true; break;
+                case 'KeyA': moveLeft = true; break;
+                case 'KeyD': moveRight = true; break;
+            }
         });
         document.addEventListener('keyup', (e) => {
-            switch (e.code) { case 'KeyW': moveForward = false; break; case 'KeyS': moveBackward = false; break;
-                case 'KeyA': moveLeft = false; break; case 'KeyD': moveRight = false; break; }
+            switch (e.code) {
+                case 'KeyW': moveForward = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyD': moveRight = false; break;
+            }
         });
 
-        // Sol
-        const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff88 });
-        const sun = new THREE.Mesh(new THREE.SphereGeometry(5, 32, 32), sunMaterial);
+        // Sol con glow
+        const sun = new THREE.Mesh(
+            new THREE.SphereGeometry(6, 32, 32),
+            new THREE.MeshBasicMaterial({ color: 0xffff88 })
+        );
         scene.add(sun);
-        sun.add(new THREE.PointLight(0xffffff, 3, 0));
+        const sunLight = new THREE.PointLight(0xffffff, 4, 0);
+        sun.add(sunLight);
 
-        // Planetas (sin texturas externas, colores sólidos para carga rápida)
-        const planets = [], msgMeshes = [];
+        // Planetas con realismo (solo rotación propia, sin órbita)
+        const planets = [];
+        const msgMeshes = [];
         const messages = [
-            { pos: [0, 0, 20], text: 'Te amo mi princesita hermosa ❤️', planet: 'Luna' },
-            { pos: [40, 0, 0], text: 'Eres lo mejor que me ha pasado en esta vida 🌹', planet: 'Marte' },
-            { pos: [0, 0, -60], text: 'Quiero estar contigo para siempre y por siempre amor 💕', planet: 'Júpiter' },
-            { pos: [-15, 0, 0], text: '¿Quieres ser mi San Valentín? 💝', planet: 'Tierra' },
-            { pos: [0, 15, -45], text: 'Recuerdas nuestra primera cita? Aún me pones nervioso... 😍', planet: 'Venus' },
-            { pos: [55, 8, 30], text: 'Prometo cuidarte, amarte y hacerte reír todos los días 👑', planet: 'Saturno' }
+            { pos: [0, 0, 20], text: 'Te amo mi princesita hermosa ❤️' },
+            { pos: [40, 0, 0], text: 'Eres lo mejor que me ha pasado en esta vida 🌹' },
+            { pos: [0, 0, -60], text: 'Quiero estar contigo para siempre y por siempre amor 💕' },
+            { pos: [-15, 0, 0], text: '¿Quieres ser mi San Valentín? 💝' },
+            { pos: [0, 15, -45], text: 'Recuerdas nuestra primera cita? Aún me pones nervioso... 😍' },
+            { pos: [55, 8, 30], text: 'Prometo cuidarte, amarte y hacerte reír todos los días 👑' }
         ];
         const planetData = [
-            { radius: 1, distance: 20, color: 0xc0c0c0, speed: 0.015 },
-            { radius: 1.5, distance: 40, color: 0xff4500, speed: 0.01 },
-            { radius: 4, distance: 60, color: 0xd8ca9d, speed: 0.006 },
-            { radius: 1.8, distance: 30, color: 0x6b93d6, speed: 0.012 },
-            { radius: 2, distance: 45, color: 0xff69b4, speed: 0.008 },
-            { radius: 3.5, distance: 70, color: 0xe0c080, speed: 0.005 }
+            { radius: 1.2, pos: [0, 0, 20], color: 0xc0c0c0, rotSpeed: 0.03, emissive: 0x222222 },
+            { radius: 1.8, pos: [40, 0, 0], color: 0xff4500, rotSpeed: 0.025, emissive: 0x331100 },
+            { radius: 5, pos: [0, 0, -60], color: 0xd8ca9d, rotSpeed: 0.015, emissive: 0x443300 },
+            { radius: 2.2, pos: [-15, 0, 0], color: 0x6b93d6, rotSpeed: 0.022, emissive: 0x112244 },
+            { radius: 2.5, pos: [0, 15, -45], color: 0xff69b4, rotSpeed: 0.018, emissive: 0x331122 },
+            { radius: 4.2, pos: [55, 8, 30], color: 0xe0c080, rotSpeed: 0.012, emissive: 0x443300 }
         ];
 
         planetData.forEach((data, i) => {
-            const mat = new THREE.MeshLambertMaterial({ color: data.color });
-            const planet = new THREE.Mesh(new THREE.SphereGeometry(data.radius, 32, 32), mat);
-            planet.position.set(data.distance * (i % 2 ? 1 : -1), 0, 0);
-            planet.userData = { angle: Math.random() * Math.PI * 2, dist: data.distance, speed: data.speed };
+            const planet = new THREE.Mesh(
+                new THREE.SphereGeometry(data.radius, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: data.color,
+                    emissive: data.emissive,
+                    emissiveIntensity: 0.4,
+                    roughness: 0.7,
+                    metalness: 0.1
+                })
+            );
+            planet.position.set(...data.pos);
+            planet.castShadow = true;
+            planet.receiveShadow = true;
             scene.add(planet);
             planets.push(planet);
 
-            const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 256;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0,0,512,256);
-            ctx.fillStyle = '#ff69b4'; ctx.font = 'bold 38px Arial'; ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,512,256);
+            ctx.fillStyle = '#ff69b4'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center';
             ctx.fillText(messages[i].text, 256, 140);
-            const textureMsg = new THREE.CanvasTexture(canvas);
-            const matMsg = new THREE.MeshBasicMaterial({ map: textureMsg, transparent: true, opacity: 0 });
-            const msg = new THREE.Mesh(new THREE.PlaneGeometry(12, 6), matMsg);
-            msg.position.set(messages[i].pos[0], messages[i].pos[1] + 8, messages[i].pos[2]);
+            const texture = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0 });
+            const msg = new THREE.Mesh(new THREE.PlaneGeometry(14, 7), mat);
+            msg.position.set(data.pos[0], data.pos[1] + 10 + data.radius, data.pos[2]);
             scene.add(msg);
             msgMeshes.push(msg);
             msg.userData.planet = planet;
         });
 
-        // Anillos para Saturno
-        const ringGeo = new THREE.RingGeometry(4.5, 6, 64);
-        const ringMat = new THREE.MeshBasicMaterial({ color: 0xcccccc, side: THREE.DoubleSide });
+        // Anillos Saturno
+        const ringGeo = new THREE.RingGeometry(5, 7.5, 64);
+        const ringMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, side: THREE.DoubleSide, roughness: 0.9 });
         const ring = new THREE.Mesh(ringGeo, ringMat);
-        ring.rotation.x = Math.PI / 2;
+        ring.rotation.x = Math.PI / 2 + 0.4;
         planets[5].add(ring);
 
-        // Estrellas densas
+        // Estrellas
         const starsGeo = new THREE.BufferGeometry();
         const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05 });
         const verts = [];
-        for (let i = 0; i < 30000; i++) verts.push(THREE.MathUtils.randFloatSpread(3000), THREE.MathUtils.randFloatSpread(3000), THREE.MathUtils.randFloatSpread(3000));
+        for (let i = 0; i < 30000; i++) {
+            verts.push(THREE.MathUtils.randFloatSpread(3000), THREE.MathUtils.randFloatSpread(3000), THREE.MathUtils.randFloatSpread(3000));
+        }
         starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
         scene.add(new THREE.Points(starsGeo, starsMat));
 
@@ -156,10 +180,10 @@
         const rcMat = new THREE.PointsMaterial({ color: 0xff69b4, size: 0.6 });
         scene.add(new THREE.Points(rcGeo, rcMat));
 
-        // Corazones flotantes optimizados
+        // Corazones
         const heartsGeo = new THREE.BufferGeometry();
         const hPos = [], hVel = [], hCol = [];
-        for (let i = 0; i < 300; i++) { // Menos para carga rápida
+        for (let i = 0; i < 300; i++) {
             hPos.push(THREE.MathUtils.randFloatSpread(400), THREE.MathUtils.randFloatSpread(200), THREE.MathUtils.randFloatSpread(400));
             hVel.push((Math.random()-0.5)*0.02, Math.random()*0.01+0.003, (Math.random()-0.5)*0.02);
             hCol.push(1, 0.4+Math.random()*0.3, 0.5+Math.random()*0.5);
@@ -170,9 +194,8 @@
         const hearts = new THREE.Points(heartsGeo, heartsMat);
         scene.add(hearts);
 
-        camera.position.set(0, 5, 40); // Posición inicial para ver sol y planetas
+        camera.position.set(0, 12, 50);
 
-        // Mensajes flotantes laterales
         const floatingMsgs = [
             "Nuestro amor es infinito como este universo ❤️",
             "Cada estrella brilla por ti, mi R 🌟",
@@ -193,7 +216,6 @@
             setTimeout(() => { msgElement.style.opacity = 0; }, 5000);
         }
 
-        // Música
         const music = document.getElementById('bgMusic');
         music.volume = 0.25;
         function toggleMusic() {
@@ -208,35 +230,37 @@
             const now = performance.now();
             const delta = (now - prev) / 1000; prev = now;
 
-            velocity.x -= velocity.x * 10 * delta; velocity.z -= velocity.z * 10 * delta;
-            direction.z = +moveForward - +moveBackward; direction.x = +moveRight - +moveLeft;
+            velocity.x -= velocity.x * 10 * delta;
+            velocity.z -= velocity.z * 10 * delta;
+            direction.z = +moveForward - +moveBackward;
+            direction.x = +moveRight - +moveLeft;
             if (direction.length()) direction.normalize();
             if (moveForward || moveBackward) velocity.z -= direction.z * 40 * delta;
             if (moveLeft || moveRight) velocity.x -= direction.x * 40 * delta;
-            controls.moveRight(-velocity.x * delta); controls.moveForward(-velocity.z * delta);
+            controls.moveRight(-velocity.x * delta);
+            controls.moveForward(-velocity.z * delta);
 
-            sun.rotation.y += 0.003;
+            sun.rotation.y += 0.0025;
 
-            planets.forEach(p => {
-                p.userData.angle += p.userData.speed;
-                p.position.x = Math.cos(p.userData.angle) * p.userData.dist;
-                p.position.z = Math.sin(p.userData.angle) * p.userData.dist;
-                p.rotation.y += 0.005;
+            planets.forEach((p, i) => {
+                p.rotation.y += planetData[i].rotSpeed * delta;
             });
 
-            starsGeo.rotateY(0.00005);
+            starsGeo.rotateY(0.00003);
 
             const pos = hearts.geometry.attributes.position.array;
             for (let i = 0; i < pos.length; i += 3) {
-                pos[i+1] += hVel[(i/3)*3 +1]; if (pos[i+1] > 200) pos[i+1] = -200;
-                pos[i] += hVel[(i/3)*3] * 0.3; pos[i+2] += hVel[(i/3)*3 +2] * 0.3;
+                pos[i+1] += hVel[(i/3)*3 +1] * delta * 60;
+                if (pos[i+1] > 200) pos[i+1] = -200;
+                pos[i] += hVel[(i/3)*3] * 0.3 * delta * 60;
+                pos[i+2] += hVel[(i/3)*3 +2] * 0.3 * delta * 60;
             }
             hearts.geometry.attributes.position.needsUpdate = true;
 
             msgMeshes.forEach(msg => {
                 const dist = camera.position.distanceTo(msg.userData.planet.position);
-                msg.material.opacity = (dist < 15) ? 0.85 : 0;
-                if (dist < 15) msg.lookAt(camera.position);
+                msg.material.opacity = THREE.MathUtils.lerp(msg.material.opacity, (dist < 18) ? 0.9 : 0, 0.05);
+                if (dist < 18) msg.lookAt(camera.position);
             });
 
             if (now - lastMsgTime > minInterval + Math.random() * (maxInterval - minInterval)) {
@@ -249,7 +273,8 @@
         animate();
 
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
