@@ -27,7 +27,7 @@
 <body>
     <div id="info">
         <h2>🌌 Nuestro Universo, mi Rosario ❤️</h2>
-        <p>Usa WASD para moverte, mouse para mirar. Acércate a los planetas para leer mis mensajes.</p>
+        <p>Usa WASD para moverte, mouse para mirar. Acércate a los planetas o mira al fondo para ver la comparación de tamaños.</p>
         <p>¡Feliz San Valentín, mi amor eterno! 💕</p>
         <button id="musicBtn" onclick="toggleMusic()">▶️ Love Story</button>
     </div>
@@ -90,7 +90,7 @@
             }
         });
 
-        // Sol con glow
+        // Sol
         const sun = new THREE.Mesh(
             new THREE.SphereGeometry(6, 32, 32),
             new THREE.MeshBasicMaterial({ color: 0xffff88 })
@@ -99,16 +99,16 @@
         const sunLight = new THREE.PointLight(0xffffff, 4, 0);
         sun.add(sunLight);
 
-        // Planetas con realismo (solo rotación propia, sin órbita)
+        // Planetas fijos con rotación propia
         const planets = [];
         const msgMeshes = [];
         const messages = [
-            { pos: [0, 0, 20], text: 'Te amo mi princesita hermosa ❤️' },
-            { pos: [40, 0, 0], text: 'Eres lo mejor que me ha pasado en esta vida 🌹' },
-            { pos: [0, 0, -60], text: 'Quiero estar contigo para siempre y por siempre amor 💕' },
-            { pos: [-15, 0, 0], text: '¿Quieres ser mi San Valentín? 💝' },
-            { pos: [0, 15, -45], text: 'Recuerdas nuestra primera cita? Aún me pones nervioso... 😍' },
-            { pos: [55, 8, 30], text: 'Prometo cuidarte, amarte y hacerte reír todos los días 👑' }
+            { text: 'Te amo mi princesita hermosa ❤️' },
+            { text: 'Eres lo mejor que me ha pasado en esta vida 🌹' },
+            { text: 'Quiero estar contigo para siempre y por siempre amor 💕' },
+            { text: '¿Quieres ser mi San Valentín? 💝' },
+            { text: 'Recuerdas nuestra primera cita? Aún me pones nervioso... 😍' },
+            { text: 'Prometo cuidarte, amarte y hacerte reír todos los días 👑' }
         ];
         const planetData = [
             { radius: 1.2, pos: [0, 0, 20], color: 0xc0c0c0, rotSpeed: 0.03, emissive: 0x222222 },
@@ -179,6 +179,15 @@
         rcGeo.setAttribute('position', new THREE.Float32BufferAttribute(rcPositions, 3));
         const rcMat = new THREE.PointsMaterial({ color: 0xff69b4, size: 0.6 });
         scene.add(new THREE.Points(rcGeo, rcMat));
+
+        // Gráfico comparativo de tamaños (como la imagen que quieres)
+        const loader = new THREE.TextureLoader();
+        const comparisonTexture = loader.load('https://science.nasa.gov/wp-content/uploads/2023/09/solar-system-sizes-768.jpg?w=768'); // NASA oficial, comparación de tamaños
+        // Alternativa si no carga: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Solar_sys8.jpg/800px-Solar_sys8.jpg'
+        const comparisonMaterial = new THREE.MeshBasicMaterial({ map: comparisonTexture, transparent: true, side: THREE.DoubleSide });
+        const comparisonPlane = new THREE.Mesh(new THREE.PlaneGeometry(80, 40), comparisonMaterial); // Tamaño grande para ver bien
+        comparisonPlane.position.set(0, 30, -300); // Lejos al fondo
+        scene.add(comparisonPlane);
 
         // Corazones
         const heartsGeo = new THREE.BufferGeometry();
@@ -267,6 +276,9 @@
                 showRandomMsg();
                 lastMsgTime = now;
             }
+
+            // El gráfico comparativo siempre mira a la cámara
+            comparisonPlane.lookAt(camera.position);
 
             renderer.render(scene, camera);
         }
