@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universo Holográfico para Rosario ❤️</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: Arial; }
+        #info { 
+            position: absolute; top: 10px; left: 10px; color: white; z-index: 100; 
+            background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; max-width: 350px;
+        }
+        #musicBtn { 
+            position: absolute; top: 10px; right: 10px; z-index: 100; 
+            background: rgba(255,105,180,0.8); color: white; border: none; 
+            padding: 12px 20px; border-radius: 50px; cursor: pointer; font-size: 18px; font-weight: bold;
+        }
+        #floatingMessage {
+            position: absolute; top: 20%; left: 5%; transform: translateY(-50%);
+            color: #ff69b4; font-size: 32px; font-weight: bold; text-align: left;
+            opacity: 0; pointer-events: none; z-index: 50; text-shadow: 0 0 10px #ff1493;
+            max-width: 30%; transition: opacity 1.5s;
+        }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h2>🌌 Nuestro Universo Real, mi Rosario ❤️</h2>
+        <p>Usa WASD para moverte, mouse para mirar. Acércate a los planetas para descubrir mis mensajes.</p>
+        <p>¡Feliz San Valentín, mi amor eterno! 💕</p>
+        <button id="musicBtn" onclick="toggleMusic()">▶️ Love Story</button>
+    </div>
+
+    <div id="floatingMessage"></div>
+
+    <!-- Música: Love Story - Indila (cambia a tu MP3 local si no carga) -->
+    <audio id="bgMusic" loop>
+        <source src="https://archive.org/download/indilamusicoggvorbis/Mini%20World/Indila%20-%20Love%20story.mp3" type="audio/mpeg">
+        <!-- Si subes MP3: <source src="love-story.mp3" type="audio/mpeg"> -->
+        Tu navegador no soporta audio.
+    </audio>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.168.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.168.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000022, 0.00015); // Niebla para profundidad
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000011);
+        document.body.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // Luz ambiental para ver todo
+        scene.add(ambientLight);
+
+        const controls = new PointerLockControls(camera, document.body);
+        scene.add(controls.getObject());
+        document.addEventListener('click', () => controls.lock());
+
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.code) { case 'KeyW': moveForward = true; break; case 'KeyS': moveBackward = true; break;
+                case 'KeyA': moveLeft = true; break; case 'KeyD': moveRight = true; break; }
+        });
+        document.addEventListener('keyup', (e) => {
+            switch (e.code) { case 'KeyW': moveForward = false; break; case 'KeyS': moveBackward = false; break;
+                case 'KeyA': moveLeft = false; break; case 'KeyD': moveRight = false; break; }
+        });
+
+        // Sol
+        const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff88 });
+        const sun = new THREE.Mesh(new THREE.SphereGeometry(5, 32, 32), sunMaterial);
+        scene.add(sun);
+        sun.add(new THREE.PointLight(0xffffff, 3, 0));
+
+        // Planetas (sin texturas externas, colores sólidos para carga rápida)
+        const planets = [], msgMeshes = [];
+        const messages = [
+            { pos: [0, 0, 20], text: 'Te amo mi princesita hermosa ❤️', planet: 'Luna' },
+            { pos: [40, 0, 0], text: 'Eres lo mejor que me ha pasado en esta vida 🌹', planet: 'Marte' },
+            { pos: [0, 0, -60], text: 'Quiero estar contigo para siempre y por siempre amor 💕', planet: 'Júpiter' },
+            { pos: [-15, 0, 0], text: '¿Quieres ser mi San Valentín? 💝', planet: 'Tierra' },
+            { pos: [0, 15, -45], text: 'Recuerdas nuestra primera cita? Aún me pones nervioso... 😍', planet: 'Venus' },
+            { pos: [55, 8, 30], text: 'Prometo cuidarte, amarte y hacerte reír todos los días 👑', planet: 'Saturno' }
+        ];
+        const planetData = [
+            { radius: 1, distance: 20, color: 0xc0c0c0, speed: 0.015 },
+            { radius: 1.5, distance: 40, color: 0xff4500, speed: 0.01 },
+            { radius: 4, distance: 60, color: 0xd8ca9d, speed: 0.006 },
+            { radius: 1.8, distance: 30, color: 0x6b93d6, speed: 0.012 },
+            { radius: 2, distance: 45, color: 0xff69b4, speed: 0.008 },
+            { radius: 3.5, distance: 70, color: 0xe0c080, speed: 0.005 }
+        ];
+
+        planetData.forEach((data, i) => {
+            const mat = new THREE.MeshLambertMaterial({ color: data.color });
+            const planet = new THREE.Mesh(new THREE.SphereGeometry(data.radius, 32, 32), mat);
+            planet.position.set(data.distance * (i % 2 ? 1 : -1), 0, 0);
+            planet.userData = { angle: Math.random() * Math.PI * 2, dist: data.distance, speed: data.speed };
+            scene.add(planet);
+            planets.push(planet);
+
+            const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0,0,512,256);
+            ctx.fillStyle = '#ff69b4'; ctx.font = 'bold 38px Arial'; ctx.textAlign = 'center';
+            ctx.fillText(messages[i].text, 256, 140);
+            const textureMsg = new THREE.CanvasTexture(canvas);
+            const matMsg = new THREE.MeshBasicMaterial({ map: textureMsg, transparent: true, opacity: 0 });
+            const msg = new THREE.Mesh(new THREE.PlaneGeometry(12, 6), matMsg);
+            msg.position.set(messages[i].pos[0], messages[i].pos[1] + 8, messages[i].pos[2]);
+            scene.add(msg);
+            msgMeshes.push(msg);
+            msg.userData.planet = planet;
+        });
+
+        // Anillos para Saturno
+        const ringGeo = new THREE.RingGeometry(4.5, 6, 64);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0xcccccc, side: THREE.DoubleSide });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        planets[5].add(ring);
+
+        // Estrellas densas
+        const starsGeo = new THREE.BufferGeometry();
+        const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05 });
+        const verts = [];
+        for (let i = 0; i < 30000; i++) verts.push(THREE.MathUtils.randFloatSpread(3000), THREE.MathUtils.randFloatSpread(3000), THREE.MathUtils.randFloatSpread(3000));
+        starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+        scene.add(new THREE.Points(starsGeo, starsMat));
+
+        // Constelación R y C
+        const rcGeo = new THREE.BufferGeometry();
+        const rcPositions = [];
+        const addPoint = (x, y, z) => rcPositions.push(x, y, z);
+        for (let y = -15; y <= 15; y += 1.5) addPoint(-60, y, -500);
+        for (let a = 0; a < Math.PI; a += 0.2) addPoint(-60 + Math.cos(a) * 12, 15 - Math.sin(a) * 12, -500);
+        for (let i = 0; i < 12; i += 1.5) addPoint(-60 + i, 15 - i*1.2, -500);
+        for (let a = Math.PI * 0.2; a < Math.PI * 1.8; a += 0.15) addPoint(50 + Math.cos(a) * 20, Math.sin(a) * 20, -520);
+        rcGeo.setAttribute('position', new THREE.Float32BufferAttribute(rcPositions, 3));
+        const rcMat = new THREE.PointsMaterial({ color: 0xff69b4, size: 0.6 });
+        scene.add(new THREE.Points(rcGeo, rcMat));
+
+        // Corazones flotantes optimizados
+        const heartsGeo = new THREE.BufferGeometry();
+        const hPos = [], hVel = [], hCol = [];
+        for (let i = 0; i < 300; i++) { // Menos para carga rápida
+            hPos.push(THREE.MathUtils.randFloatSpread(400), THREE.MathUtils.randFloatSpread(200), THREE.MathUtils.randFloatSpread(400));
+            hVel.push((Math.random()-0.5)*0.02, Math.random()*0.01+0.003, (Math.random()-0.5)*0.02);
+            hCol.push(1, 0.4+Math.random()*0.3, 0.5+Math.random()*0.5);
+        }
+        heartsGeo.setAttribute('position', new THREE.Float32BufferAttribute(hPos, 3));
+        heartsGeo.setAttribute('color', new THREE.Float32BufferAttribute(hCol, 3));
+        const heartsMat = new THREE.PointsMaterial({ size: 0.4, vertexColors: true, transparent: true, opacity: 0.7 });
+        const hearts = new THREE.Points(heartsGeo, heartsMat);
+        scene.add(hearts);
+
+        camera.position.set(0, 5, 40); // Posición inicial para ver sol y planetas
+
+        // Mensajes flotantes laterales
+        const floatingMsgs = [
+            "Nuestro amor es infinito como este universo ❤️",
+            "Cada estrella brilla por ti, mi R 🌟",
+            "R y C: unidos en el cosmos para siempre 💍",
+            "No hay galaxia que nos separe, mi amor",
+            "Eres mi constelación, mi universo entero ✨",
+            "Te amo más que todas las estrellas juntas 😘"
+        ];
+        const msgElement = document.getElementById('floatingMessage');
+        let lastMsgTime = performance.now();
+        const minInterval = 10000;
+        const maxInterval = 15000;
+
+        function showRandomMsg() {
+            const randomText = floatingMsgs[Math.floor(Math.random() * floatingMsgs.length)];
+            msgElement.textContent = randomText;
+            msgElement.style.opacity = 0.8;
+            setTimeout(() => { msgElement.style.opacity = 0; }, 5000);
+        }
+
+        // Música
+        const music = document.getElementById('bgMusic');
+        music.volume = 0.25;
+        function toggleMusic() {
+            if (music.paused) { music.play(); document.getElementById('musicBtn').textContent = '⏸️ Love Story'; }
+            else { music.pause(); document.getElementById('musicBtn').textContent = '▶️ Love Story'; }
+        }
+        document.addEventListener('click', () => { music.play().catch(() => {}); }, { once: true });
+
+        let prev = performance.now();
+        function animate() {
+            requestAnimationFrame(animate);
+            const now = performance.now();
+            const delta = (now - prev) / 1000; prev = now;
+
+            velocity.x -= velocity.x * 10 * delta; velocity.z -= velocity.z * 10 * delta;
+            direction.z = +moveForward - +moveBackward; direction.x = +moveRight - +moveLeft;
+            if (direction.length()) direction.normalize();
+            if (moveForward || moveBackward) velocity.z -= direction.z * 40 * delta;
+            if (moveLeft || moveRight) velocity.x -= direction.x * 40 * delta;
+            controls.moveRight(-velocity.x * delta); controls.moveForward(-velocity.z * delta);
+
+            sun.rotation.y += 0.003;
+
+            planets.forEach(p => {
+                p.userData.angle += p.userData.speed;
+                p.position.x = Math.cos(p.userData.angle) * p.userData.dist;
+                p.position.z = Math.sin(p.userData.angle) * p.userData.dist;
+                p.rotation.y += 0.005;
+            });
+
+            starsGeo.rotateY(0.00005);
+
+            const pos = hearts.geometry.attributes.position.array;
+            for (let i = 0; i < pos.length; i += 3) {
+                pos[i+1] += hVel[(i/3)*3 +1]; if (pos[i+1] > 200) pos[i+1] = -200;
+                pos[i] += hVel[(i/3)*3] * 0.3; pos[i+2] += hVel[(i/3)*3 +2] * 0.3;
+            }
+            hearts.geometry.attributes.position.needsUpdate = true;
+
+            msgMeshes.forEach(msg => {
+                const dist = camera.position.distanceTo(msg.userData.planet.position);
+                msg.material.opacity = (dist < 15) ? 0.85 : 0;
+                if (dist < 15) msg.lookAt(camera.position);
+            });
+
+            if (now - lastMsgTime > minInterval + Math.random() * (maxInterval - minInterval)) {
+                showRandomMsg();
+                lastMsgTime = now;
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
